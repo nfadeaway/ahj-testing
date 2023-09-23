@@ -1,19 +1,39 @@
-import puppeteer from "puppeteer";
+import puppetteer from 'puppeteer';
+import { fork } from 'child_process';
 
-describe("Page start", () => {
-  let browser;
-  let page;
+jest.setTimeout(30000); // default puppeteer timeout
 
-  beforeEach(async () => {
-    browser = await puppeteer.launch({
-      headless: false,
-      slowMo: 100,
-      devtools: false,
+describe('Credit Card Validator form', () => {
+  let browser = null;
+  let page = null;
+  let server = null;
+  const baseUrl = 'http://localhost:9000';
+
+  beforeAll(async () => {
+    server = fork(`${__dirname}/e2e.server.js`);
+    await new Promise((resolve, reject) => {
+      server.on('error', reject);
+      server.on('message', (message) => {
+        if (message === 'ok') {
+          resolve();
+        }
+      });
+    });
+
+    browser = await puppetteer.launch({
+      // headless: false, // show gui
+      // slowMo: 250,
+      // devtools: true, // show devTools
     });
     page = await browser.newPage();
   });
 
-  test("Тест на валидность карт", async () => {
+  afterAll(async () => {
+    await browser.close();
+    server.kill();
+  });
+
+  test("Тест интерфейса виджета проверки карт", async () => {
     await page.goto("http://localhost:9000");
     await page.waitForSelector(".form-card");
     const amex = await page.$(".amex");
@@ -45,8 +65,4 @@ describe("Page start", () => {
       true,
     );
   }, 20000);
-
-  afterEach(async () => {
-    await browser.close();
-  });
 });

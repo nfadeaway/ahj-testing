@@ -38,7 +38,6 @@ export default class CreditCard {
     ) {
       return "diners";
     }
-    console.log("false");
     return false;
   }
 
